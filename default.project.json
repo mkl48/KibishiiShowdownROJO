@@ -1,0 +1,27 @@
+{
+	"name": "KibishiiShowdown",
+	"tree": {
+		"$className": "DataModel",
+
+		"ReplicatedStorage": {
+			"$path": "src/ReplicatedStorage",
+			"$ignoreUnknownInstances": true
+		},
+		"ServerScriptService": {
+			"$path": "src/ServerScriptService",
+			"$ignoreUnknownInstances": true
+		},
+		"ServerStorage": {
+			"$path": "src/ServerStorage",
+			"$ignoreUnknownInstances": true
+		},
+		"StarterPlayer": {
+			"$path": "src/StarterPlayer",
+			"$ignoreUnknownInstances": true
+		},
+		"StarterGui": {
+			"$path": "src/StarterGui",
+			"$ignoreUnknownInstances": true
+		}
+	}
+}
