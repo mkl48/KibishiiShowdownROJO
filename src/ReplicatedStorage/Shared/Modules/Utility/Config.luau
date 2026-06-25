@@ -49,6 +49,11 @@ Config.Junction = {
 			Message = { Destination = "PlayerService" },
 			Welcome = { Destination = "PlayerService" },
 		},
+		Memory = {
+			-- client -> server: request a keybind/setting change (server validates).
+			-- (The values themselves replicate through Plinko's own remotes, not here.)
+			Change = { Destination = "MemoryService" },
+		},
 	},
 
 	Local = {
@@ -135,7 +140,7 @@ Config.Manifest = {
 Config.ClassPriority = {
 	[1] = { "StatusController", "StatusManager" },
 	[2] = { "CombatController", "CombatManager", "AbilityManager" },
-	[3] = { "InputController", "AnimationController" },
+	[3] = { "InputController", "AnimationController", "MemoryController" },
 	[4] = { "InterfaceController", "AbilityController" }, -- need Animation booted first
 }
 
@@ -149,6 +154,7 @@ Config.StandalonePriority = {
 	CombatService = 3,
 	CharacterService = 4, -- builds the catalog (registers moves with Memo)
 	HitboxService = 5, -- ctx.hitbox provider for ability hit detection
+	MemoryService = 6, -- defines the Session/Keybinds/Settings Plinko caches
 }
 
 return Config
