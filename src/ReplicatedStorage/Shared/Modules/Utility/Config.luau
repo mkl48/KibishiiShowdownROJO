@@ -43,6 +43,12 @@ Config.Junction = {
 			-- server -> all clients: run this move's client tracks on the caster
 			Play = { Destination = "AbilityController" },
 		},
+		Player = {
+			-- client -> server PlayerService; server -> client PlayerService.
+			-- Same destination name -- the two halves are side-split.
+			Message = { Destination = "PlayerService" },
+			Welcome = { Destination = "PlayerService" },
+		},
 	},
 
 	Local = {
@@ -138,8 +144,8 @@ Config.ClassPriority = {
 -- announces spawns before StatusService inits per-player state from them.
 -- ============================================================================
 Config.StandalonePriority = {
-	-- PlayerService is the game's own (ServerStorage); StatusService self-inits now.
-	StatusService = 2,
+	PlayerService = 1, -- sessions (server + client halves, side-split)
+	StatusService = 2, -- self-inits per player on spawn
 	CombatService = 3,
 	CharacterService = 4, -- builds the catalog (registers moves with Memo)
 	HitboxService = 5, -- ctx.hitbox provider for ability hit detection

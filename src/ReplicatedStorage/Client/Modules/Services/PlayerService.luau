@@ -1,35 +1,24 @@
-local Players = game:GetService("Players")
+-- Kibishii Showdown
+-- Client/Modules/Services/PlayerService.luau
+--
+-- Client half of the Player domain. Converted from the old Switchboard API to Junky's
+-- Context. Receives the server's Welcome payload; send up to the server with
+-- context:Network("Player"):Post("Message", ...). Same domain name as the server half
+-- -- they're side-split, so "PlayerService" resolves per side.
 
 local PlayerService = {}
-local _NetworkController: any
-local _Switchboard: any
-local _Enums: any
-local _PlayerServiceSwitch: any
 
-type PlayerExport = {
-	Profile : {any},
-	Session : {any},
-	Instance : Player
-}
+function PlayerService:Start(context)
+	local Player = context:Network("Player")
 
-local function CreatePlayer(SessionInfo, InstanceInfo)
-
-end
-
-function PlayerService.Start(ctx)
-	_NetworkController = ctx.GetController("NetworkController")
-	_Switchboard = _NetworkController.GetServiceBoard()
-	_Enums = ctx.Enums
-	_PlayerServiceSwitch = _Switchboard:Get("PlayerService")
-	
-	warn(_PlayerServiceSwitch)
-	_NetworkController.Subscribe(_PlayerServiceSwitch, function(Payload, P2)
-		warn("PlayerService ->", Payload, P2)
+	-- server -> client: the welcome payload (was the Switchboard subscribe).
+	Player:Subscribe("Welcome", function(payload)
+		warn("[PlayerService] welcome:", payload and payload.Message)
 	end)
 end
 
-function PlayerService.GetPlayer()
-
+function PlayerService:GetPlayer()
+	-- session accessor stub (client mirror of server session, when wired)
 end
 
 return PlayerService
