@@ -133,6 +133,36 @@ function Memo.canInterrupt(current: MoveSpec, incoming: MoveSpec): boolean
 	return priorityValue(incoming.priority) >= priorityValue(current.priority)
 end
 
+-- The resources a move declares it costs (your game deducts them; Memo never owns
+-- resources). Empty table if none.
+function Memo.costOf(spec: MoveSpec): { [string]: number }
+	return spec.cost or {}
+end
+
+-- Run a move's conditions against a context without starting it. Returns
+-- (true) or (false, reason). Call this (plus your own cost check) before execute.
+function Memo.canStart(spec: MoveSpec, ctx: Ctx): (boolean, string?)
+	if spec.conditions then
+		local resolved = buildCtx(ctx)
+		for _, cond in spec.conditions do
+			local ok, reason = cond(resolved)
+			if not ok then
+				return false, reason or ("[Memo] condition failed for " .. spec.name)
+			end
+		end
+	end
+	return true
+end
+
+-- Gate + execute in one call: refuses with a rejected promise if a condition fails.
+function Memo.tryExecute(spec: MoveSpec, ctx: Ctx): typeof(Promise.new(function() end))
+	local ok, reason = Memo.canStart(spec, ctx)
+	if not ok then
+		return Promise.rejected(reason)
+	end
+	return Memo.execute(spec, ctx)
+end
+
 Memo.Drive = {
 	time = function(duration: number): Types.DriveMode
 		return { kind = "time", duration = duration }

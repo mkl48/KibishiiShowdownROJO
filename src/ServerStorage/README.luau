@@ -1,8 +1,7 @@
 local README = {
 [[
-# My Roblox Project
+# KibishiiShowdownROGIT
 
-Managed with RoGit.
 ]]
 }
 

@@ -17,11 +17,14 @@ function StatusController:Start(context)
 	self._manifest = context:GetPackage("Manifest")
 
 	local Status = context:Network("Status")
+	local Hud = context:Local("Hud")
 
 	-- Authoritative state stream from the server.
 	Status:Subscribe("Sync", function(snapshot)
 		self.Snapshot = snapshot
-		-- TODO (Hud milestone): context:Local("Hud"):Post("Refresh", snapshot)
+		-- Re-emit locally so the HUD (InterfaceController) gets it -- Network delivery
+		-- is destination-filtered to this controller, so we fan it out via Local.
+		Hud:Post("Refresh", snapshot)
 		print(("[Status] HP %d/%d  Posture %d  Vital %d  (%s)"):format(
 			snapshot.Health,
 			snapshot.MaxHealth,

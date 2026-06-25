@@ -31,6 +31,12 @@ Config.Junction = {
 			-- server -> a client: you were knocked Down (ragdoll + respawn flow)
 			Down = { Destination = "StatusController" },
 		},
+		Character = {
+			-- client -> server request: the selectable characters
+			List = { Destination = "CharacterService" },
+			-- client -> server request: pick a character (returns { ok, character? })
+			Select = { Destination = "CharacterService" },
+		},
 	},
 
 	Local = {
@@ -45,6 +51,10 @@ Config.Junction = {
 		-- server-only: PlayerService announces a spawned player so state can init.
 		Data = {
 			Loaded = { Destination = "StatusService", Side = "Server" },
+		},
+		-- client-only: StatusController fans status snapshots out to the HUD.
+		Hud = {
+			Refresh = { Destination = "InterfaceController", Side = "Client" },
 		},
 	},
 }
@@ -113,7 +123,8 @@ Config.Manifest = {
 Config.ClassPriority = {
 	[1] = { "StatusController", "StatusManager" },
 	[2] = { "CombatController", "CombatManager" },
-	[3] = { "InputController" },
+	[3] = { "InputController", "AnimationController" },
+	[4] = { "InterfaceController" }, -- builds the HUD/select screens last
 }
 
 -- ============================================================================
@@ -124,6 +135,7 @@ Config.StandalonePriority = {
 	PlayerService = 1,
 	StatusService = 2,
 	CombatService = 3,
+	CharacterService = 4, -- builds the catalog (registers moves with Memo)
 }
 
 return Config

@@ -74,6 +74,11 @@ export type MoveSpec = {
 	routes: { BranchRoute },
 	defaultCrossfade: CrossfadeConfig,
 	tags: { string }?,
+	-- Declarative gating. Memo never owns resources -- it declares cost (your
+	-- AbilityManager reads spec.cost and deducts it) and runs conditions before a
+	-- cast. A condition returns (false, "why") to refuse.
+	cost: { [string]: number }?,
+	conditions: { (ctx: Ctx) -> (boolean, string?) }?,
 }
 
 export type VariantResolver = (ctx: Ctx) -> string

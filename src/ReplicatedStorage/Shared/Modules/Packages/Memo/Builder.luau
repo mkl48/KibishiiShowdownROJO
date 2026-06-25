@@ -27,6 +27,7 @@ export type PhaseBuilder = {
 	onEnter: (self: PhaseBuilder, fn: (ctx: Ctx) -> ()) -> PhaseBuilder,
 	onExit: (self: PhaseBuilder, fn: (ctx: Ctx) -> ()) -> PhaseBuilder,
 	counter: (self: PhaseBuilder, config: CounterWindow) -> PhaseBuilder,
+	window: (self: PhaseBuilder, config: CancelWindow) -> PhaseBuilder,
 	done: (self: PhaseBuilder) -> MoveBuilder,
 }
 
@@ -119,6 +120,15 @@ local function newPhaseBuilder(name: Types.PhaseKind, moveRef: any): PhaseBuilde
 		return self
 	end
 
+	-- A cancel window scoped to THIS phase. `phase` defaults to the current phase,
+	-- so a move can declare windows inline without repeating the phase name. Windows
+	-- live at the move level (the Timeline reads spec.windows), this just routes there.
+	function pb:window(config: CancelWindow)
+		config.phase = config.phase or name
+		table.insert(moveRef._windows, config)
+		return self
+	end
+
 	function pb:done()
 		desc.tracks = pb._tracks
 		table.insert(moveRef._phases, desc)
@@ -137,6 +147,8 @@ local function new(name: string): MoveBuilder
 	mb._routes = {} :: { BranchRoute }
 	mb._crossfade = { mode = "hard" } :: CrossfadeConfig
 	mb._tags = {} :: { string }
+	mb._cost = {} :: { [string]: number }
+	mb._conditions = {} :: { (ctx: Ctx) -> (boolean, string?) }
 
 	function mb:priority(p)
 		mb._priority = p
@@ -169,6 +181,24 @@ local function new(name: string): MoveBuilder
 		return self
 	end
 
+	-- :cost("VitalForce", 25) or :cost({ VitalForce = 25, Posture = 10 })
+	function mb:cost(resource, amount)
+		if type(resource) == "table" then
+			for k, v in resource do
+				mb._cost[k] = v
+			end
+		else
+			mb._cost[resource] = amount
+		end
+		return self
+	end
+
+	-- A gate run before the move starts. Return (false, "why") to refuse the cast.
+	function mb:condition(fn)
+		table.insert(mb._conditions, fn)
+		return self
+	end
+
 	function mb:build(): MoveSpec
 		local spec: MoveSpec = {
 			name = mb._name,
@@ -178,6 +208,8 @@ local function new(name: string): MoveBuilder
 			routes = mb._routes,
 			defaultCrossfade = mb._crossfade,
 			tags = mb._tags,
+			cost = mb._cost,
+			conditions = mb._conditions,
 		}
 		table.freeze(spec)
 		return spec
