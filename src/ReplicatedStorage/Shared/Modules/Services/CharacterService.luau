@@ -83,10 +83,15 @@ function CharacterService:GetSelected(player: Player): string?
 	return self.Selected[player]
 end
 
--- The built CharacterDef a player is currently playing (nil if none chosen).
+-- The built CharacterDef a player is currently playing. Falls back to a default
+-- character if they haven't chosen yet, so combat works before the select UI exists.
 function CharacterService:GetPlayerDef(player: Player)
-	local name = self.Selected[player]
+	local name = self.Selected[player] or self:DefaultName()
 	return name and self.Catalog[name] or nil
+end
+
+function CharacterService:DefaultName(): string?
+	return self:Names()[1]
 end
 
 -- Look up a registered move spec for a player by class + move name (for executors).

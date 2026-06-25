@@ -86,6 +86,31 @@ function StatusService:SetBlocking(player: Player, blocking: boolean)
 	end
 end
 
+-- How much vital force a player has right now.
+function StatusService:GetVitalForce(player: Player): number
+	local s = self.State[player]
+	return s and s.VitalForce or 0
+end
+
+-- Spend vital force if the player can afford it. Returns true on success (and a cost
+-- of 0/nil always succeeds). AbilityManager calls this before executing a move.
+function StatusService:SpendVitalForce(player: Player, amount: number?): boolean
+	local s = self.State[player]
+	if not s then
+		return false
+	end
+	amount = amount or 0
+	if amount <= 0 then
+		return true
+	end
+	if s.VitalForce < amount then
+		return false
+	end
+	s.VitalForce -= amount
+	self:_changed(player)
+	return true
+end
+
 -- Apply an authoritative hit. `hit` = { Damage, Stun, Knockback }. Returns the
 -- result the caller replicates to the victim, or nil if the target wasn't valid.
 function StatusService:ApplyHit(player: Player, hit)

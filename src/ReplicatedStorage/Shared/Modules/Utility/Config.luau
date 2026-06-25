@@ -37,6 +37,12 @@ Config.Junction = {
 			-- client -> server request: pick a character (returns { ok, character? })
 			Select = { Destination = "CharacterService" },
 		},
+		Ability = {
+			-- client -> server: "I pressed <action>"; server resolves + authorizes
+			Cast = { Destination = "AbilityManager" },
+			-- server -> all clients: run this move's client tracks on the caster
+			Play = { Destination = "AbilityController" },
+		},
 	},
 
 	Local = {
@@ -55,6 +61,10 @@ Config.Junction = {
 		-- client-only: StatusController fans status snapshots out to the HUD.
 		Hud = {
 			Refresh = { Destination = "InterfaceController", Side = "Client" },
+		},
+		-- client-only: InputController -> AbilityController (M1 / skill presses).
+		Ability = {
+			Input = { Destination = "AbilityController", Side = "Client" },
 		},
 	},
 }
@@ -122,9 +132,9 @@ Config.Manifest = {
 -- ============================================================================
 Config.ClassPriority = {
 	[1] = { "StatusController", "StatusManager" },
-	[2] = { "CombatController", "CombatManager" },
+	[2] = { "CombatController", "CombatManager", "AbilityManager" },
 	[3] = { "InputController", "AnimationController" },
-	[4] = { "InterfaceController" }, -- builds the HUD/select screens last
+	[4] = { "InterfaceController", "AbilityController" }, -- need Animation booted first
 }
 
 -- ============================================================================
@@ -136,6 +146,7 @@ Config.StandalonePriority = {
 	StatusService = 2,
 	CombatService = 3,
 	CharacterService = 4, -- builds the catalog (registers moves with Memo)
+	HitboxService = 5, -- ctx.hitbox provider for ability hit detection
 }
 
 return Config

@@ -12,13 +12,16 @@ local InputController = {}
 
 function InputController:Start(context)
 	local Input = context:Local("Input")
+	local Ability = context:Local("Ability")
 
 	UserInputService.InputBegan:Connect(function(io, gameProcessed)
 		if gameProcessed then
 			return
 		end
 		if io.UserInputType == Enum.UserInputType.MouseButton1 then
-			Input:Post("Pressed", "M1")
+			-- M1 now drives the character's Memo moveset (the base combo), not the
+			-- old Combat.Swing path. Block still flows to the combat spine.
+			Ability:Post("Input", "M1")
 		elseif io.KeyCode == Enum.KeyCode.F then
 			Input:Post("Pressed", "Block:Down")
 		end

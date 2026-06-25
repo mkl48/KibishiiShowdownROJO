@@ -77,6 +77,21 @@ function Memo.execute(spec: MoveSpec, ctx: Ctx): typeof(Promise.new(function() e
 	return promise
 end
 
+-- Like execute, but also hands back the live Timeline (for interrupt/cancel and
+-- onCompleted tracking -- e.g. an AbilityManager keeping one move per player).
+function Memo.executeTracked(spec: MoveSpec, ctx: Ctx)
+	local resolved = buildCtx(ctx)
+	return Timeline.start(spec, resolved) -- (timeline, promise)
+end
+
+-- Resolve a variant spec to its concrete MoveSpec for `ctx` (server picks, then
+-- broadcasts the chosen variant so clients run the exact same one).
+function Memo.resolveVariant(spec: VariantSpec, ctx: Ctx): (MoveSpec?, string?)
+	local resolved = buildCtx(ctx)
+	local name = spec.resolver(resolved)
+	return spec.variants[name], name
+end
+
 function Memo.executeAt(spec: MoveSpec, ctx: Ctx, phase: string): typeof(Promise.new(function() end))
 	local resolved = buildCtx(ctx)
 	local _, promise = Timeline.startAt(spec, resolved, phase)
