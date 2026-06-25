@@ -54,10 +54,6 @@ Config.Junction = {
 		Status = {
 			Changed = { Destination = "StatusManager", Side = "Server" },
 		},
-		-- server-only: PlayerService announces a spawned player so state can init.
-		Data = {
-			Loaded = { Destination = "StatusService", Side = "Server" },
-		},
 		-- client-only: StatusController fans status snapshots out to the HUD.
 		Hud = {
 			Refresh = { Destination = "InterfaceController", Side = "Client" },
@@ -142,7 +138,7 @@ Config.ClassPriority = {
 -- announces spawns before StatusService inits per-player state from them.
 -- ============================================================================
 Config.StandalonePriority = {
-	PlayerService = 1,
+	-- PlayerService is the game's own (ServerStorage); StatusService self-inits now.
 	StatusService = 2,
 	CombatService = 3,
 	CharacterService = 4, -- builds the catalog (registers moves with Memo)

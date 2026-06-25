@@ -28,13 +28,20 @@ end
 
 -- Inject every top-level package under a folder by its own name, so a module can do
 -- context:GetPackage("Facet"). Direct children only -- never descends into a package.
+-- Each require is isolated: a package that errors on load (e.g. a UI lib missing a
+-- child) is skipped with a warning instead of crashing the entire bootstrap.
 local function injectPackages(container, into)
 	if not container then
 		return
 	end
 	for _, module in container:GetChildren() do
 		if module:IsA("ModuleScript") then
-			into[module.Name] = require(module)
+			local ok, result = pcall(require, module)
+			if ok then
+				into[module.Name] = result
+			else
+				warn(("[Bootstrap] package '%s' failed to load -- skipped: %s"):format(module.Name, tostring(result)))
+			end
 		end
 	end
 end

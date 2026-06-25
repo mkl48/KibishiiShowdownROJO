@@ -14,12 +14,22 @@ function StatusService:Start(context)
 	self._context = context
 	self._manifest = context:GetPackage("Manifest")
 
-	local Data = context:Local("Data")
-
-	-- Per-player init each time a character loads (PlayerService posts this).
-	Data:Subscribe("Loaded", function(payload)
-		self:Init(payload.Player, payload.MaxHealth)
-	end)
+	-- Self-init per player on spawn. Owns its own lifecycle so it doesn't depend on a
+	-- separate PlayerService posting Data.Loaded (avoids the duplicate-PlayerService
+	-- clash with the game's own ServerStorage PlayerService).
+	local Players = game:GetService("Players")
+	local function onPlayer(player: Player)
+		if player.Character then
+			self:Init(player)
+		end
+		player.CharacterAdded:Connect(function()
+			self:Init(player)
+		end)
+	end
+	for _, player in Players:GetPlayers() do
+		task.spawn(onPlayer, player)
+	end
+	Players.PlayerAdded:Connect(onPlayer)
 
 	-- Resource regen tick. Cheap, server-side, fixed cadence.
 	task.spawn(function()
