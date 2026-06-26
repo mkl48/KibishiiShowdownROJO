@@ -32,9 +32,10 @@ function StatusController:Start(context)
 		))
 	end)
 
-	-- We got knocked out.
+	-- We got knocked out. The SERVER ragdolls us authoritatively (Splint) and it
+	-- replicates, so there's nothing physical to do here -- just react in UI/camera.
 	Net:OnServer("Status.Down", function(_snapshot)
-		self:Ragdoll()
+		-- TODO: KO screen / camera knock. (No client ragdoll -- server owns it.)
 	end)
 end
 
