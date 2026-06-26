@@ -9,6 +9,7 @@
 -- from stepping on each other.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
 
 local AbilityController = {}
 
@@ -24,12 +25,12 @@ function AbilityController:Start(context)
 	self._catalog = charactersFolder and CharacterBuilder.buildAll(charactersFolder, Memo) or {}
 
 	-- Input -> cast request. (M1 = the character's base combo; skills slot in later.)
-	context:Local("Ability"):Subscribe("Input", function(action)
-		context:Network("Ability"):Post("Cast", { action = action })
+	Net:OnSignal("Ability.Input", function(action)
+		Net:ToServer("Ability.Cast", { action = action })
 	end)
 
 	-- Server says a move went off -> run its client tracks on the caster.
-	context:Network("Ability"):Subscribe("Play", function(payload)
+	Net:OnServer("Ability.Play", function(payload)
 		self:_play(payload)
 	end)
 end

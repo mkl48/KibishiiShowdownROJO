@@ -9,6 +9,8 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
 
 local CombatController = {}
 
@@ -17,25 +19,19 @@ local LocalPlayer = Players.LocalPlayer
 function CombatController:Start(context)
 	self._context = context
 	self._manifest = context:GetPackage("Manifest")
-	self._network = context:Network("Combat")
 	self._lastSwing = 0
 
-	local Input = context:Local("Input")
-	local Network = self._network
-
-	Input:Subscribe("Pressed", function(action)
-		if action == "M1" then
-			self:Swing()
-		elseif action == "Block:Down" then
-			Network:Post("Block", { Active = true })
+	-- Block input (M1 is handled by the Ability domain now). Same-side signal.
+	Net:OnSignal("Input.Pressed", function(action)
+		if action == "Block:Down" then
+			Net:ToServer("Combat.Block", { Active = true })
 		elseif action == "Block:Up" then
-			Network:Post("Block", { Active = false })
+			Net:ToServer("Combat.Block", { Active = false })
 		end
 	end)
 
-	-- Server's authoritative verdict on a hit WE landed isn't sent back here; this
-	-- subscription is the result of being HIT (the server PostTo's the victim).
-	Network:Subscribe("Hit", function(result)
+	-- The server's authoritative result of US being hit (knockback / ragdoll / crit).
+	Net:OnServer("Combat.Hit", function(result)
 		self:PlayHitReaction(result)
 	end)
 end
@@ -51,7 +47,7 @@ function CombatController:Swing()
 
 	local targets = self:ScanTargets()
 	-- TODO: play swing animation / trail here for feel.
-	self._network:Post("Swing", { Targets = targets, At = workspace:GetServerTimeNow() })
+	Net:ToServer("Combat.Swing", { Targets = targets, At = workspace:GetServerTimeNow() })
 end
 
 -- A cheap client hitbox: players in a forward cone within range. The server only

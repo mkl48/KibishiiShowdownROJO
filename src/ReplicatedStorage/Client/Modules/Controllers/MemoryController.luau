@@ -12,14 +12,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Packages = ReplicatedStorage.Shared.Modules.Packages
 local Plinko = require(Packages.Plinko)
+local Net = require(Packages.Network)
 local MemoryManifest = require(ReplicatedStorage.Shared.Modules.Utility.MemoryManifest)
 
 local MemoryController = {}
 MemoryController.Caches = {}
 
-function MemoryController:Start(context)
-	self._network = context:Network("Memory")
-
+function MemoryController:Start(_context)
 	-- Mirror the server's caches; Plinko connects each to its replication remote.
 	for _, block in MemoryManifest.Order do
 		local def = MemoryManifest[block]
@@ -44,7 +43,7 @@ end
 
 -- Request a change. Server validates + writes; the value comes back via replication.
 function MemoryController:Set(block: string, key: string, value)
-	self._network:Post("Change", { Cache = block, Key = key, Value = value })
+	Net:ToServer("Memory.Change", { Cache = block, Key = key, Value = value })
 end
 
 return MemoryController

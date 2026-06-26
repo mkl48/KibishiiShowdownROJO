@@ -1,35 +1,32 @@
 -- Kibishii Showdown
 -- client/Modules/Controllers/InputController.luau
 --
--- Raw input -> intent. It owns no combat logic; it just translates device input
--- into Local "Input.Pressed" intents (M1, Block, later Skill1..4 / Dash). The
--- Junction routes those to CombatController. Keeping input in one place means
--- rebinding never touches combat code.
+-- Raw input -> intent. It owns no combat logic; it translates device input into
+-- same-side Network signals (M1 -> Ability.Input drives the moveset; Block ->
+-- Input.Pressed flows to the combat spine). Centralizing input means rebinding never
+-- touches combat code. (Migrate the keys to the Memory keybinds cache when ready.)
 
 local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
 
 local InputController = {}
 
-function InputController:Start(context)
-	local Input = context:Local("Input")
-	local Ability = context:Local("Ability")
-
+function InputController:Start(_context)
 	UserInputService.InputBegan:Connect(function(io, gameProcessed)
 		if gameProcessed then
 			return
 		end
 		if io.UserInputType == Enum.UserInputType.MouseButton1 then
-			-- M1 now drives the character's Memo moveset (the base combo), not the
-			-- old Combat.Swing path. Block still flows to the combat spine.
-			Ability:Post("Input", "M1")
+			Net:Signal("Ability.Input", "M1")
 		elseif io.KeyCode == Enum.KeyCode.F then
-			Input:Post("Pressed", "Block:Down")
+			Net:Signal("Input.Pressed", "Block:Down")
 		end
 	end)
 
 	UserInputService.InputEnded:Connect(function(io)
 		if io.KeyCode == Enum.KeyCode.F then
-			Input:Post("Pressed", "Block:Up")
+			Net:Signal("Input.Pressed", "Block:Up")
 		end
 	end)
 end

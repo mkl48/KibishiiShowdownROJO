@@ -8,6 +8,8 @@
 -- stubs to fill in when data (Keep/Pik) is wired.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
 
 local PlayerService = {}
 PlayerService.Sessions = {} -- [player] = PlayerExport
@@ -20,18 +22,16 @@ export type PlayerExport = {
 
 function PlayerService:Start(context)
 	self._context = context
-	local Player = context:Network("Player")
 
-	-- client -> server: a player message (the old Switchboard subscribe). The sending
-	-- Player is appended by Junky as the trailing arg.
-	Player:Subscribe("Message", function(payload, player)
+	-- client -> server: a player message (Net puts the sending player first).
+	Net:OnClient("Player.Message", function(player, payload)
 		warn("[PlayerService] message from", player.Name, payload)
 	end)
 
 	local function onPlayer(player: Player)
 		self:CreatePlayer(player)
-		-- server -> that client: welcome payload (the old test Post).
-		Player:PostTo(player, "Welcome", { Message = "Test Message" })
+		-- server -> that client: welcome payload.
+		Net:ToClient(player, "Player.Welcome", { Message = "Test Message" })
 	end
 
 	for _, player in Players:GetPlayers() do

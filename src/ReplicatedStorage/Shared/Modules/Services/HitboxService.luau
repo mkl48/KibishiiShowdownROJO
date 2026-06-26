@@ -11,6 +11,8 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
 
 local DEFAULT_RANGE = 8
 local FRONT_DOT = 0.2 -- forward cone leniency
@@ -75,7 +77,6 @@ end
 -- One detection sweep: any new player in the forward cone takes the hit once.
 function HitboxService:_sweep(attackerChar: Model, root: BasePart, params, hitSet, range: number)
 	local Status = self._context:GetService("StatusService")
-	local Combat = self._context:Network("Combat")
 	local origin = root.Position
 	local look = root.CFrame.LookVector
 
@@ -100,7 +101,7 @@ function HitboxService:_sweep(attackerChar: Model, root: BasePart, params, hitSe
 				if result then
 					-- Reuse the combat spine: the victim's CombatController plays the
 					-- knockback/ragdoll reaction from this authoritative result.
-					Combat:PostTo(player, "Hit", result)
+					Net:ToClient(player, "Combat.Hit", result)
 				end
 			end
 		end

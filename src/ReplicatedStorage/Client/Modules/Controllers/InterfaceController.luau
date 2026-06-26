@@ -7,26 +7,27 @@
 -- snapshots); the `_build*` / `_refresh*` methods are intentionally empty TODOs for
 -- you to fill with actual widgets.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
+
 local InterfaceController = {}
 
 function InterfaceController:Start(context)
 	self._context = context
-	self._character = context:Network("Character")
 	self._selected = nil :: string?
 
-	-- HUD: StatusController fans the authoritative snapshot out on Local Hud.Refresh
-	-- (Network Status.Sync is destination-filtered to StatusController).
-	context:Local("Hud"):Subscribe("Refresh", function(snapshot)
+	-- HUD: StatusController fans the snapshot out on the Hud.Refresh signal.
+	Net:OnSignal("Hud.Refresh", function(snapshot)
 		self._latest = snapshot
 		self:_refreshHud(snapshot)
 	end)
 
 	-- Pull the roster, then hand it to your select screen.
 	self:RequestCharacterList()
-		:Next(function(names)
+		:next(function(names)
 			self:_buildCharacterSelect(names)
 		end)
-		:Catch(function(err)
+		:toss(function(err)
 			warn("[InterfaceController] character list failed:", err)
 		end)
 
@@ -37,14 +38,14 @@ end
 
 -- Ask the server for the selectable characters. Resolves with { string }.
 function InterfaceController:RequestCharacterList()
-	return self._character:Request("List")
+	return Net:Ask("Character.List")
 end
 
 -- Tell the server which character the player picked. Resolves with
 -- { ok = boolean, character?, reason? }. Updates local state on success.
 function InterfaceController:SelectCharacter(name: string)
-	return self._character:Request("Select", { Name = name })
-		:Next(function(result)
+	return Net:Ask("Character.Select", { Name = name })
+		:next(function(result)
 			if result and result.ok then
 				self._selected = result.character
 			end

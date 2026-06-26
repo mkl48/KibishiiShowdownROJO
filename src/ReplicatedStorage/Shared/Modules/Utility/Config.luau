@@ -11,69 +11,14 @@
 local Config = {}
 
 -- ============================================================================
--- Junction -- the routing topology. Every event declared once, with where it goes.
---   Network = crosses client <-> server (Substance transport).
---   Local   = stays on one side, resolved in-process.
+-- Junction -- DEPRECATED. Messaging moved to the Network package (Packages/Network):
+-- channels are "Domain.Event" strings created on the fly, no central routing table.
+-- Junky still wants this key to exist for Configure(), so it's empty. See each
+-- module for `local Net = require(...Network)` and Net:ToServer/OnClient/Ask/Signal.
 -- ============================================================================
 Config.Junction = {
-	Network = {
-		Combat = {
-			-- client -> server: "I threw M1 #n, here are the targets my client saw"
-			Swing = { Destination = "CombatManager" },
-			-- client -> server: guard raised / lowered
-			Block = { Destination = "CombatManager" },
-			-- server -> the victim: authoritative hit result (damage, knockback, crit)
-			Hit = { Destination = "CombatController" },
-		},
-		Status = {
-			-- server -> a client: their own HP / posture / vital-force snapshot
-			Sync = { Destination = "StatusController" },
-			-- server -> a client: you were knocked Down (ragdoll + respawn flow)
-			Down = { Destination = "StatusController" },
-		},
-		Character = {
-			-- client -> server request: the selectable characters
-			List = { Destination = "CharacterService" },
-			-- client -> server request: pick a character (returns { ok, character? })
-			Select = { Destination = "CharacterService" },
-		},
-		Ability = {
-			-- client -> server: "I pressed <action>"; server resolves + authorizes
-			Cast = { Destination = "AbilityManager" },
-			-- server -> all clients: run this move's client tracks on the caster
-			Play = { Destination = "AbilityController" },
-		},
-		Player = {
-			-- client -> server PlayerService; server -> client PlayerService.
-			-- Same destination name -- the two halves are side-split.
-			Message = { Destination = "PlayerService" },
-			Welcome = { Destination = "PlayerService" },
-		},
-		Memory = {
-			-- client -> server: request a keybind/setting change (server validates).
-			-- (The values themselves replicate through Plinko's own remotes, not here.)
-			Change = { Destination = "MemoryService" },
-		},
-	},
-
-	Local = {
-		-- client-only: InputController fans raw input out to CombatController.
-		Input = {
-			Pressed = { Destination = "CombatController", Side = "Client" },
-		},
-		-- server-only: StatusService announces a changed slice; StatusManager forwards.
-		Status = {
-			Changed = { Destination = "StatusManager", Side = "Server" },
-		},
-		-- client-only: StatusController fans status snapshots out to the HUD.
-		Hud = {
-			Refresh = { Destination = "InterfaceController", Side = "Client" },
-		},
-		-- client-only: InputController -> AbilityController (M1 / skill presses).
-		Ability = {
-			Input = { Destination = "AbilityController", Side = "Client" },
-		},
-	},
+	Network = {},
+	Local = {},
 }
 
 -- ============================================================================

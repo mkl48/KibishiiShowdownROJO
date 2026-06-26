@@ -6,13 +6,14 @@
 -- context:Network("Player"):Post("Message", ...). Same domain name as the server half
 -- -- they're side-split, so "PlayerService" resolves per side.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
+
 local PlayerService = {}
 
-function PlayerService:Start(context)
-	local Player = context:Network("Player")
-
-	-- server -> client: the welcome payload (was the Switchboard subscribe).
-	Player:Subscribe("Welcome", function(payload)
+function PlayerService:Start(_context)
+	-- server -> client: the welcome payload.
+	Net:OnServer("Player.Welcome", function(payload)
 		warn("[PlayerService] welcome:", payload and payload.Message)
 	end)
 end

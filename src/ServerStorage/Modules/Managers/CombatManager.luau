@@ -2,27 +2,25 @@
 -- server/Modules/Managers/CombatManager.luau
 --
 -- Server half of the Combat domain and counterpart of CombatController. It is the
--- authority: it never trusts the client's swing. A Guard drops swings from players
--- who can't act; the handler re-validates cadence + targets via CombatService, then
--- routes each resolved hit through StatusService (the only thing that mutates HP),
--- and replicates the authoritative result back to the victim.
+-- authority: it never trusts the client's swing. It re-checks the player can act,
+-- re-validates cadence + targets via CombatService, routes each resolved hit through
+-- StatusService (the only thing that mutates HP), and replicates the result to the
+-- victim. Messaging is the Network lib now ("Combat.*" channels), not the Junction.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
 
 local CombatManager = {}
 
 function CombatManager:Start(context)
-	local Network = context:Network("Combat")
 	local Combat = context:GetService("CombatService")
 	local Status = context:GetService("StatusService")
 
-	-- Edge guard: a stunned / downed / unknown player cannot swing. Vetoed posts
-	-- never reach the handler below.
-	Network:Guard("Swing", function(_data, player)
-		return Status:CanAct(player)
-	end)
-
-	-- A confirmed swing. `player` is the trailing arg Junky appends server-side --
-	-- trust it, never a player field inside the payload.
-	Network:Subscribe("Swing", function(data, player)
+	-- A confirmed swing. With Network, the sending player is the FIRST arg.
+	Net:OnClient("Combat.Swing", function(player, data)
+		if not Status:CanAct(player) then
+			return -- was the old Guard: stunned / downed players can't swing
+		end
 		local comboIndex, reverb = Combat:RegisterSwing(player)
 		if not comboIndex then
 			return -- cadence cheat / spam; silently dropped
@@ -33,14 +31,13 @@ function CombatManager:Start(context)
 			local hit = Combat:HitFor(player, comboIndex, reverb, target)
 			local result = Status:ApplyHit(target, hit)
 			if result then
-				-- Authoritative outcome to the victim: knockback, stun, crit flash.
-				Network:PostTo(target, "Hit", result)
+				Net:ToClient(target, "Combat.Hit", result)
 			end
 		end
 	end)
 
 	-- Guard up / down. Just records intent in authoritative state.
-	Network:Subscribe("Block", function(data, player)
+	Net:OnClient("Combat.Block", function(player, data)
 		Status:SetBlocking(player, data and data.Active == true)
 	end)
 end

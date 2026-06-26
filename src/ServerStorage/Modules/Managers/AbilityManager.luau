@@ -8,6 +8,9 @@
 -- client runs the SAME move's client tracks (anim/vfx) on the caster. Server tracks
 -- only run here; client tracks only run there -- Memo's side filtering does the split.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
+
 local AbilityManager = {}
 
 local NOOP_ANIMATOR = { play = function() end, stop = function() end, stopAll = function() end }
@@ -19,13 +22,12 @@ function AbilityManager:Start(context)
 	self._memo = Memo
 	self._active = {} -- [player] = { tl, spec }
 
-	local Ability = context:Network("Ability")
 	local Status = context:GetService("StatusService")
 	local Character = context:GetService("CharacterService")
 	local Hitbox = context:GetService("HitboxService")
 
-	-- client -> server: "I pressed <action>". `player` is the trailing arg.
-	Ability:Subscribe("Cast", function(payload, player)
+	-- client -> server: "I pressed <action>". Network puts the player FIRST.
+	Net:OnClient("Ability.Cast", function(player, payload)
 		local action = type(payload) == "table" and payload.action or payload
 		self:_cast(context, Memo, Status, Character, Hitbox, player, action)
 	end)
@@ -112,7 +114,7 @@ function AbilityManager:_cast(context, Memo, Status, Character, Hitbox, player, 
 	tl.onCancelled:Connect(clear)
 
 	-- Tell every client to run this move's client tracks on the caster.
-	context:Network("Ability"):Post("Play", {
+	Net:ToAll("Ability.Play", {
 		Caster = player,
 		Character = def.Name,
 		Class = class,

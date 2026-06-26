@@ -7,6 +7,9 @@
 -- directly. It posts Status.Changed whenever a slice moves so the Manager can sync
 -- the owning client. It is decoupled: it doesn't know how hits arrive.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
+
 local StatusService = {}
 StatusService.State = {} -- [player] = { Health, Posture, VitalForce, Status, StunUntil }
 
@@ -212,7 +215,7 @@ end
 
 -- Internal: announce a changed slice. StatusManager forwards it to the client.
 function StatusService:_changed(player: Player)
-	self._context:Local("Status"):Post("Changed", {
+	Net:Signal("Status.Changed", {
 		Player = player,
 		Snapshot = self:Snapshot(player),
 	})

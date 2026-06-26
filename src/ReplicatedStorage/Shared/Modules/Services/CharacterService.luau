@@ -12,6 +12,7 @@ local Players = game:GetService("Players")
 
 local Packages = ReplicatedStorage.Shared.Modules.Packages
 local Memo = require(Packages.Memo)
+local Net = require(Packages.Network)
 local CharacterBuilder = require(ReplicatedStorage.Shared.Modules.Utility.CharacterBuilder)
 
 local CharacterService = {}
@@ -30,15 +31,11 @@ function CharacterService:Start(context)
 		warn("[CharacterService] no Classes.Characters folder found")
 	end
 
-	local Character = context:Network("Character")
-
-	-- client -> server request: the selectable characters.
-	Character:Respond("List", function()
+	-- client -> server requests, answered here (Net puts the player first).
+	Net:Answer("Character.List", function()
 		return self:Names()
 	end)
-
-	-- client -> server request: pick a character. Returns { ok, character?, reason? }.
-	Character:Respond("Select", function(payload, player)
+	Net:Answer("Character.Select", function(player, payload)
 		local name = type(payload) == "table" and payload.Name or payload
 		return self:Select(player, name)
 	end)

@@ -7,6 +7,8 @@
 -- will subscribe to a Local "Hud.Refresh" that this controller posts on every Sync.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
 
 local StatusController = {}
 
@@ -16,15 +18,11 @@ function StatusController:Start(context)
 	self.Snapshot = nil
 	self._manifest = context:GetPackage("Manifest")
 
-	local Status = context:Network("Status")
-	local Hud = context:Local("Hud")
-
 	-- Authoritative state stream from the server.
-	Status:Subscribe("Sync", function(snapshot)
+	Net:OnServer("Status.Sync", function(snapshot)
 		self.Snapshot = snapshot
-		-- Re-emit locally so the HUD (InterfaceController) gets it -- Network delivery
-		-- is destination-filtered to this controller, so we fan it out via Local.
-		Hud:Post("Refresh", snapshot)
+		-- Fan it out to the HUD (InterfaceController) via a same-side signal.
+		Net:Signal("Hud.Refresh", snapshot)
 		print(("[Status] HP %d/%d  Posture %d  Vital %d  (%s)"):format(
 			snapshot.Health,
 			snapshot.MaxHealth,
@@ -35,7 +33,7 @@ function StatusController:Start(context)
 	end)
 
 	-- We got knocked out.
-	Status:Subscribe("Down", function(_snapshot)
+	Net:OnServer("Status.Down", function(_snapshot)
 		self:Ragdoll()
 	end)
 end

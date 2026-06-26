@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Packages = ReplicatedStorage.Shared.Modules.Packages
 local Plinko = require(Packages.Plinko)
+local Net = require(Packages.Network)
 local MemoryManifest = require(ReplicatedStorage.Shared.Modules.Utility.MemoryManifest)
 
 -- Per-key value guards (clamp / sanitize before a write lands).
@@ -40,8 +41,8 @@ function MemoryService:Start(context)
 		})
 	end
 
-	-- client -> server: a validated change request. `player` is the trailing arg.
-	context:Network("Memory"):Subscribe("Change", function(payload, player)
+	-- client -> server: a validated change request (Net puts the player first).
+	Net:OnClient("Memory.Change", function(player, payload)
 		self:Change(player, payload)
 	end)
 end
