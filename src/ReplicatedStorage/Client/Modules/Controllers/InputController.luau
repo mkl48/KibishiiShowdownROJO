@@ -18,6 +18,7 @@ function InputController:Start(_context)
 			return
 		end
 		if io.UserInputType == Enum.UserInputType.MouseButton1 then
+			print("[DBG] InputController: M1 clicked")
 			Net:Signal("Ability.Input", "M1")
 		elseif io.KeyCode == Enum.KeyCode.F then
 			Net:Signal("Input.Pressed", "Block:Down")

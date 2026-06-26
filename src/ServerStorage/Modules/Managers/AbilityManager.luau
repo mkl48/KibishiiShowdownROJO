@@ -28,23 +28,28 @@ function AbilityManager:Start(context)
 
 	-- client -> server: "I pressed <action>". Network puts the player FIRST.
 	Net:OnClient("Ability.Cast", function(player, payload)
+		print("[DBG] AbilityManager received Ability.Cast from", player and player.Name)
 		local action = type(payload) == "table" and payload.action or payload
 		self:_cast(context, Memo, Status, Character, Hitbox, player, action)
 	end)
 end
 
 function AbilityManager:_cast(context, Memo, Status, Character, Hitbox, player, action)
+	print("[DBG cast] got:", player and player.Name, action)
 	if not Status:CanAct(player) then
+		print("[DBG cast] BAIL CanAct=false (no status state or stunned/down)")
 		return
 	end
 	local char = player.Character
 	if not char then
+		print("[DBG cast] BAIL no character")
 		return
 	end
 
 	-- Resolve <action> -> (class, moveName) from the caster's character order.
 	local def = Character:GetPlayerDef(player)
 	if not def then
+		print("[DBG cast] BAIL no character def (catalog empty / none selected)")
 		return
 	end
 	local order = def.Manifest and def.Manifest.MovesetOverview and def.Manifest.MovesetOverview.Order
@@ -55,14 +60,17 @@ function AbilityManager:_cast(context, Memo, Status, Character, Hitbox, player, 
 	end
 	-- (skills 1-4 / specials slot in here as more actions are bound)
 	if not moveName then
+		print("[DBG cast] BAIL no moveName for", action, "(order.Base[1] nil?)")
 		return
 	end
 
 	local byClass = def.Moves[class]
 	local registered = byClass and byClass[moveName]
 	if not registered then
+		print("[DBG cast] BAIL move not registered:", class, moveName, "-- have:", byClass and table.concat((function() local t={} for k in byClass do table.insert(t,k) end return t end)(), ",") or "nil")
 		return
 	end
+	print("[DBG cast] resolved move:", moveName)
 
 	-- Build the server-side context (real hitbox; a no-op animator so shared anim
 	-- tracks don't error server-side).
@@ -102,6 +110,7 @@ function AbilityManager:_cast(context, Memo, Status, Character, Hitbox, player, 
 	end
 
 	-- Run server tracks (hitbox) and track the timeline for interrupt/cleanup.
+	print("[DBG cast] EXECUTING + broadcasting Play:", moveName, variantName)
 	local tl = Memo.executeTracked(moveSpec, serverCtx)
 	self._active[player] = { tl = tl, spec = moveSpec }
 	local function clear()

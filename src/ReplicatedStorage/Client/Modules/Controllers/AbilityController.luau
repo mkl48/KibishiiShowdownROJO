@@ -27,11 +27,13 @@ function AbilityController:Start(context)
 
 	-- Input -> cast request. (M1 = the character's base combo; skills slot in later.)
 	Net:OnSignal("Ability.Input", function(action)
+		print("[DBG] AbilityController: Ability.Input", action, "-> ToServer Cast")
 		Net:ToServer("Ability.Cast", { action = action })
 	end)
 
 	-- Server says a move went off -> run its client tracks on the caster.
 	Net:OnServer("Ability.Play", function(payload)
+		print("[DBG] AbilityController: got Ability.Play", payload and payload.Move)
 		self:_play(payload)
 	end)
 end
