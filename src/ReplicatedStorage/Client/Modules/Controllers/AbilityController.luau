@@ -10,6 +10,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Net = require(ReplicatedStorage.Shared.Modules.Packages.Network)
+local Mixit = require(ReplicatedStorage.Shared.Modules.Packages.Mixit)
 
 local AbilityController = {}
 
@@ -63,6 +64,16 @@ function AbilityController:_play(payload)
 		player = caster,
 		animator = self._animation:For(character),
 	})
+
+	-- Play the all-in-one Mixit tape for this move (real animation + scene/stamp
+	-- timing). Tape name matches the move's spec name; pcall = no tape -> no-op.
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local animatorInst = humanoid and humanoid:FindFirstChildOfClass("Animator")
+	if animatorInst then
+		pcall(function()
+			Mixit.play(registered.name, { Animator = animatorInst })
+		end)
+	end
 end
 
 return AbilityController
